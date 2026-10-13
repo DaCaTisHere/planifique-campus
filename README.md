@@ -20,6 +20,23 @@ leur photo, parcours clients animés et fiches CRM.
 | Fonctions support | Aile sud | IT & Data, RH, Administration & Opérations, Marketing & Growth |
 | Business Development | Pavillon externe, hors du bâtiment | Service externe d'appels sortants, prend les RDV pour tous les pôles |
 
+## Ce que fait chaque service sur la maquette
+
+| Service | Reconnaissable à | Activité animée |
+| --- | --- | --- |
+| Planification Retraite | Deux salons de RDV sur place | RDV sur place avec les clients, et RDV à domicile : le conseiller prend une voiture au parking et va chez le client |
+| Démarches Retraite | Armoires et piles de dossiers | Demandes envoyées aux caisses de pension, avoirs LPP récupérés en retour |
+| Suivi Clients | Casques, écran du nombre d'appels | Appels de suivi vers les maisons des clients, relances à 90 jours |
+| Immobilier | Maquettes de maisons, tableau des biens | Visites en voiture des maisons « À vendre », ventes qui passent à « Vendu » |
+| Gestion Privée | Écran des marchés, fauteuils | RDV patrimoniaux, mandats signés |
+| Ingénierie & Family Office | Tableau blanc | Études patrimoniales |
+| Fiscalité & Audit | Liasses et calculatrices | Audits et déclarations |
+| Informatique & Data | Baies serveurs aux LEDs, kanban | Tickets traités |
+| Marketing & Growth | Affiches des livres blancs | Leads envoyés au Business Development |
+| Business Development | Pavillon externe, casques, écran des leads | Appels, RDV pris pour les pôles |
+
+Un clic sur une équipe zoome dessus, l'entoure d'un contour lumineux et ouvre une carte d'activité en direct. Le panneau affiche les chiffres du jour (compteurs animés), l'historique sur 7 jours et le journal d'activité.
+
 ## Modes et effets
 
 - **Organisation** : panneaux de pôles de loin, équipes de près ; clic sur un pôle, une équipe ou une personne.
