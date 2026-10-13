@@ -1,0 +1,683 @@
+<title>Planifique Campus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: architect's model of the office (isometric, cutaway) beside a CRM sheet with portraits. Single committed daylight look. */
+:root{
+  --bg:#eceee9; --surface:#ffffff; --surface-2:#f3f5f1; --line:#e0e4dd; --line-2:#cfd5cc;
+  --fg:#18211f; --muted:#66736f; --accent:#0e5a55; --accent-2:#147a72; --accent-soft:#e3efec;
+  --c-dir:#6a5a8c; --c-ret:#3f9a6b; --c-gp:#2f6fb8; --c-fisc:#c98d1f; --c-dev:#d0603f; --c-cli:#2a9d9a; --c-sup:#7a8794;
+  --s-dispo:#2fa863; --s-rdv:#3b7fd4; --s-dossier:#e19b12; --s-absent:#a3adb0; --alert:#d4493f;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --shadow:0 1px 2px rgba(24,33,31,.06),0 8px 24px -12px rgba(24,33,31,.18);
+  color-scheme:light;
+}
+html,body{height:100%;background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+img{display:block}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr;padding-inline:16px;padding-block:14px;gap:14px}
+
+/* Top bar */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:38px;height:38px;border-radius:11px;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:20px;box-shadow:var(--shadow)}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:21px;margin:0;letter-spacing:-.015em;line-height:1.1}
+.brand p{margin:0;font-size:12px;color:var(--muted)}
+.modes{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:var(--shadow)}
+.modes button{background:none;border:0;padding:7px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:500;font-size:13.5px;transition:background .2s,color .2s}
+.modes button:hover{color:var(--fg)}
+.modes button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.kpis{display:flex;flex-wrap:wrap;align-items:center;gap:8px 26px;margin-left:auto}
+.kpi{display:flex;flex-direction:column}
+.kpi b{font-family:var(--f-display);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.kpi.present{flex-direction:row;align-items:center;gap:10px}
+.stack{display:flex}
+.stack img{width:28px;height:28px;border-radius:50%;border:2px solid var(--bg);margin-left:-9px;object-fit:cover;background:var(--surface-2)}
+.stack img:first-child{margin-left:0}
+
+/* Stage */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:14px;min-height:0}
+#view{position:relative;border-radius:16px;overflow:hidden;min-height:0;background:radial-gradient(120% 90% at 45% 35%,#fbfbf8 0%,#eef0ea 55%,#e2e6df 100%);box-shadow:var(--shadow);border:1px solid var(--line)}
+#view canvas{display:block;width:100%;height:100%;touch-action:none}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.zl{position:absolute;transform:translate(-50%,-50%);font-family:var(--f-display);font-weight:700;font-size:12.5px;letter-spacing:-.005em;white-space:nowrap;display:flex;align-items:center;gap:6px;color:var(--fg);background:rgba(255,255,255,.88);backdrop-filter:blur(6px);border-radius:999px;padding:3px 10px 3px 4px;box-shadow:0 1px 2px rgba(24,33,31,.08),0 4px 12px -6px rgba(24,33,31,.25);transition:opacity .25s}
+.zl i{width:16px;height:16px;border-radius:50%;flex:none}
+.zl small{font-family:var(--f-mono);font-weight:400;font-size:11px;color:var(--muted)}
+.zl .step{font-family:var(--f-mono);font-size:11px;background:var(--accent);color:#fff;border-radius:999px;padding:0 6px;font-weight:500}
+.zl.dim{opacity:.3}
+.tip{position:absolute;transform:translate(-50%,calc(-100% - 14px));background:var(--fg);color:#fff;border-radius:12px;padding:6px 12px 6px 6px;font-size:12.5px;white-space:nowrap;display:flex;gap:9px;align-items:center;box-shadow:0 8px 20px -8px rgba(0,0,0,.4)}
+.tip img{width:34px;height:34px;border-radius:9px;object-fit:cover}
+.tip b{display:block;font-weight:600}
+.tip small{opacity:.7;font-size:11.5px}
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fff;border-radius:10px;padding:4px 10px;font-size:11.5px;white-space:nowrap;box-shadow:0 6px 16px -6px rgba(24,33,31,.35);animation:pop 2.6s ease-out forwards}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-5px;width:10px;height:10px;background:#fff;transform:translateX(-50%) rotate(45deg)}
+.bubble b{color:var(--accent);font-family:var(--f-mono);font-weight:500;margin-right:4px}
+@keyframes pop{0%{opacity:0;margin-top:8px}10%{opacity:1;margin-top:0}80%{opacity:1}100%{opacity:0;margin-top:-10px}}
+.feed{position:absolute;left:14px;bottom:14px;width:min(350px,calc(100% - 28px));display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.ev{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-radius:12px;padding:7px 12px 7px 7px;animation:slide .35s ease-out;font-size:12.5px;box-shadow:0 1px 2px rgba(24,33,31,.06),0 6px 16px -10px rgba(24,33,31,.3)}
+.ev .who{width:30px;height:30px;border-radius:9px;object-fit:cover}
+.ev .dot{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:600;font-size:12px}
+.ev p{margin:0;min-width:0}
+.ev small{display:block;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes slide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.legend{position:absolute;top:14px;left:14px;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.85);backdrop-filter:blur(6px);padding:7px 12px;border-radius:10px;max-width:calc(100% - 200px)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:50%}
+.tools{position:absolute;top:14px;right:14px;display:flex;gap:6px;align-items:center}
+.sample{font-family:var(--f-mono);font-size:11px;color:var(--accent);background:rgba(255,255,255,.85);padding:5px 9px;border-radius:8px}
+.ctrl{display:flex;flex-direction:column;position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.92);border-radius:12px;box-shadow:0 1px 2px rgba(24,33,31,.06),0 6px 16px -10px rgba(24,33,31,.3);overflow:hidden}
+.ctrl button{width:38px;height:36px;border:0;background:none;cursor:pointer;font-size:18px;color:var(--fg);display:grid;place-items:center}
+.ctrl button+button{border-top:1px solid var(--line)}
+.ctrl button:hover{background:var(--surface-2)}
+.ctrl svg{width:16px;height:16px}
+
+/* Panel */
+#panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow-y:auto;min-height:0;box-shadow:var(--shadow)}
+.search{position:sticky;top:0;z-index:2;background:var(--surface);padding:12px 14px;border-bottom:1px solid var(--line)}
+.search input{width:100%;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:9px 12px 9px 34px;font-size:13.5px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2366736f' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:11px 50%}
+.search input:focus{outline:none;border-color:var(--accent);background-color:#fff}
+.results{display:flex;flex-direction:column;gap:2px;margin-top:8px}
+.results:empty{display:none}
+.ph{padding:18px 18px 16px;display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid var(--line)}
+.ph h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;line-height:1.12;letter-spacing:-.015em;text-wrap:balance}
+.ph p{margin:6px 0 0;color:var(--muted);font-size:13px;max-width:60ch}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:5px;display:flex;align-items:center;gap:6px;font-weight:600}
+.eyebrow i{width:8px;height:8px;border-radius:50%}
+.close{margin-left:auto;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:5px 11px;cursor:pointer;font-size:12.5px;flex:none}
+.close:hover{background:#fff}
+.band{height:6px}
+.sec{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.sec:last-child{border-bottom:0}
+.sec h3{margin:0;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:10px}
+.sec h3 span{font-family:var(--f-mono);text-transform:none;letter-spacing:0;color:var(--fg);font-weight:400}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fact{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.fact b{display:block;font-family:var(--f-display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.1}
+.fact span{font-size:12px;color:var(--muted)}
+.founders{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.founder{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0;cursor:pointer;padding:0;width:64px;flex:none}
+.founder img{width:56px;height:56px;border-radius:16px;object-fit:cover;transition:transform .2s}
+.founder:hover img{transform:translateY(-2px)}
+.founder span{font-size:11.5px;text-align:center;line-height:1.2}
+.poles{display:flex;flex-direction:column;gap:8px}
+.pole{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;background:none;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;width:100%;transition:border-color .2s,background .2s}
+.pole:hover{border-color:var(--line-2);background:var(--surface-2)}
+.pole .nm{display:flex;align-items:center;gap:8px;font-weight:600;min-width:0}
+.pole .nm i{width:10px;height:10px;border-radius:3px;flex:none}
+.pole .sub{grid-column:1/-1;font-size:12px;color:var(--muted);margin-top:-4px}
+.pole .stack img{width:26px;height:26px;border-color:#fff}
+.pole code{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.loadbar{grid-column:1/-1;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.loadbar b{display:block;height:100%;border-radius:3px}
+.journeys{display:flex;gap:6px;flex-wrap:wrap}
+.journeys button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 13px;cursor:pointer;font-size:12.5px;font-weight:500}
+.journeys button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:#fff}
+.steps{list-style:none;margin:0;padding:0}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:6px 0;position:relative}
+.steps li::before{content:"";position:absolute;left:13px;top:34px;bottom:-6px;width:2px;background:var(--line)}
+.steps li:last-child::before{display:none}
+.steps .n{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-family:var(--f-mono);font-size:12px;display:grid;place-items:center;font-weight:500}
+.steps p{margin:0;font-size:13.5px;font-weight:500}
+.steps small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{font-size:12px;background:var(--surface-2);border-radius:999px;padding:3px 10px}
+.team{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.card{display:flex;gap:10px;align-items:center;background:none;border:1px solid var(--line);border-radius:12px;padding:7px;cursor:pointer;text-align:left;min-width:0;transition:border-color .2s,background .2s}
+.card:hover{border-color:var(--line-2);background:var(--surface-2)}
+.ava{position:relative;flex:none}
+.ava img{width:42px;height:42px;border-radius:11px;object-fit:cover;background:var(--surface-2)}
+.ava i{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:50%;border:2px solid #fff}
+.card span{min-width:0;font-size:12.5px;font-weight:600;line-height:1.25}
+.card small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.row{display:flex;gap:10px;align-items:center;background:none;border:0;border-radius:10px;padding:6px;cursor:pointer;text-align:left;width:100%}
+.row:hover{background:var(--surface-2)}
+.row img{width:34px;height:34px;border-radius:9px;object-fit:cover}
+.row span{min-width:0;font-size:13px;font-weight:500}
+.row small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero{display:flex;gap:16px;align-items:center}
+.hero .ava img{width:88px;height:88px;border-radius:22px}
+.hero .ava i{width:18px;height:18px;border-width:3px}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;padding:4px 11px;border-radius:999px;background:var(--surface-2);align-self:flex-start}
+.status i{width:8px;height:8px;border-radius:50%}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter small{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.meter small b{font-family:var(--f-mono);color:var(--fg);font-weight:500}
+.meter .loadbar{height:7px}
+.src{font-size:12px;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:0}
+.muted{color:var(--muted);font-size:12.5px;margin:0}
+
+@media (max-width:900px){
+  html,body{height:auto}.app{height:auto}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  #view{height:66vh;min-height:400px}
+  #panel{overflow:visible}
+  .kpis{margin-left:0;width:100%}
+  .feed .ev:nth-child(n+3){display:none}
+  .legend{display:none}
+}
+@media (max-width:480px){.team{grid-template-columns:minmax(0,1fr)}.kpi b{font-size:17px}}
+@media (prefers-reduced-motion:reduce){.ev,.bubble{animation:none}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><div class="mark">P</div><div><h1>Planifique Groupe</h1><p>Le Grand-Saconnex · Archamps · Bâle</p></div></div>
+    <div class="modes" role="group" aria-label="Mode de vue">
+      <button id="m-org" data-mode="org" aria-pressed="true">Organisation</button>
+      <button id="m-par" data-mode="parcours" aria-pressed="false">Parcours client</button>
+      <button id="m-chg" data-mode="charge" aria-pressed="false">Charge</button>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </header>
+  <main class="stage">
+    <div id="view">
+      <div class="labels" id="labels"></div>
+      <div class="legend" id="legend"></div>
+      <div class="tools"><span class="sample">Activité simulée</span></div>
+      <div class="feed" id="feed" aria-live="polite"></div>
+      <div class="ctrl">
+        <button id="zin" aria-label="Zoomer">+</button>
+        <button id="zout" aria-label="Dézoomer">−</button>
+        <button id="home" aria-label="Recentrer la vue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </div>
+    </div>
+    <aside id="panel">
+      <div class="search"><label for="q" hidden>Rechercher un collaborateur</label><input id="q" type="search" placeholder="Rechercher un collaborateur, un rôle…" autocomplete="off"><div class="results" id="results"></div></div>
+      <div id="pbody"></div>
+    </aside>
+  </main>
+</div>
+
+<script>/*PHOTOS*/</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=mulberry32(2018);
+const pick=a=>a[Math.floor(rnd()*a.length)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const img=(name,cls='')=>`<img ${cls?`class="${cls}" `:''}data-ph="${esc(name)}" alt="">`;
+function fillPhotos(root){root.querySelectorAll('img[data-ph]').forEach(i=>{const s=PHOTOS[i.dataset.ph];if(s&&i.src!==s)i.src=s})}
+
+/* ===== Organisation (annuaire public Planifique) ===== */
+const FAMS={
+  dir:{name:'Direction',hex:0x6a5a8c,css:'var(--c-dir)'},
+  ret:{name:'Retraite',hex:0x3f9a6b,css:'var(--c-ret)'},
+  gp:{name:'Gestion Privée',hex:0x2f6fb8,css:'var(--c-gp)'},
+  fisc:{name:'Fiscalité & Audit',hex:0xc98d1f,css:'var(--c-fisc)'},
+  dev:{name:'Développement',hex:0xd0603f,css:'var(--c-dev)'},
+  cli:{name:'Relation client',hex:0x2a9d9a,css:'var(--c-cli)'},
+  sup:{name:'Support',hex:0x7a8794,css:'var(--c-sup)'}
+};
+const ZONES=[
+ {id:'accueil',name:'Accueil',fam:'cli',rect:[-31,-6,-24,6],doors:[['e',0],['w',0]],people:[],desc:"Point d'entrée des clients. Premier échange offert, sans engagement.",services:['Prise de rendez-vous','Espace client en ligne']},
+ {id:'direction',name:'Direction',fam:'dir',rect:[-24,-14,-16,-2],doors:[['s']],desc:"Les associés pilotent la stratégie, la finance, l'offre financière et les partenariats.",services:['Stratégie et finances','Offre financière','Partenariats'],people:[
+  ['Arnaud Merlin','Directeur Général et Gestion Privée · Associé'],['Cédric Teppati','Directeur Pôle Retraite · Associé fondateur'],['Nicolas Chalochet','Directeur stratégique et financier · Associé fondateur'],['Taniel Keskin','Directeur Offre Financière · Associé fondateur'],['Laura Metzger','Assistante de Direction']]},
+ {id:'gp',name:'Gestion Privée',fam:'gp',rect:[-16,-14,-6,-2],doors:[['s']],desc:"Des Gestionnaires Privés clarifient les objectifs du client avant de proposer une stratégie patrimoniale.",services:['Placements financiers','Audit patrimonial','Assurance','Produits alternatifs','Succession et transmission'],people:[
+  ['Antoine Bouju','Directeur Commercial Gestion Privée'],['Alric Monnier','Responsable Commercial Gestion Privée'],['Simon Quillivic','Responsable Commercial Gestion Privée'],['Charles Baptiste','Gestionnaire Privé'],['Cécile Fuzeau','Gestionnaire Privée'],['Lisa Chabert','Gestionnaire Privée'],['Rémi Henry','Gestionnaire Privé'],['Armel de Gramont','Chargé de Relations Commerciales'],['Fabien Gradelet','Consultant Patrimonial']]},
+ {id:'inge',name:'Ingénierie & Family Office',fam:'gp',rect:[-6,-14,3,-2],doors:[['s']],desc:"Ingénierie patrimoniale, Family Office et planification financière en appui des gestionnaires.",services:['Stratégie patrimoniale','Family Office','Planification financière','Offre financière'],people:[
+  ['Florian Dubois','Directeur Family Office'],['Martin Vibert','Responsable Ingénierie Patrimoniale'],['Amaury Fauchier-Magnan','Ingénieur Patrimonial · Offre Financière'],['Ilona Diard','Ingénieure Patrimoniale'],['Lucas Gougne','Ingénieur Patrimonial'],['Andrea Curutchet','Conseillère en Planification Financière'],['Grégoire Magaud','Conseiller en Planification Financière'],['Martin Montanari','Conseiller en Planification Financière']]},
+ {id:'immo',name:'Immobilier',fam:'gp',rect:[3,-14,12,-2],doors:[['s']],desc:"Transaction, VEFA, études foncières et financement immobilier.",services:['Transaction immobilière','VEFA','Études foncières','Financement'],people:[
+  ['Thomas Vasina','Directeur Immobilier'],['Virginie Merlin','Directrice Ingénierie Immobilière'],['Marion Philippy','Coordinatrice Immobilier Transaction et VEFA'],['Inès Ben Jaafar','Conseillère Transaction Immobilière'],['Jaimar Castro','Conseillère Transaction et Études Foncières'],['Lucas Thiebault','Conseiller Transaction Immobilière'],['Henri Derisbourg','Conseiller Transaction Immobilière'],['Jessica Vallet','Assistante Commerciale Immobilier · Accueil']]},
+ {id:'fisc',name:'Fiscalité & Audit',fam:'fisc',rect:[12,-14,18,-2],doors:[['s']],empty:3,desc:"Planifique Audit : audit fiscal et patrimonial pour résidents suisses et frontaliers imposés à la source.",services:['Audit fiscal et patrimonial','Rémunération des indépendants','Mariage ou concubinage','Retraite, invalidité, décès'],people:[
+  ['Paul Dao','Directeur Partenariats et Fiscalité · Associé fondateur']]},
+ {id:'it',name:'Informatique & Data',fam:'sup',rect:[18,-14,24,-2],doors:[['s']],desc:"Salesforce, systèmes, développement et data.",services:['Salesforce','Systèmes','Développement','Data'],people:[
+  ['Samy Abdessemed','Chief Technology Officer'],['Alexandre Iwanesko','Chief Technical Officer'],['Florian Billebault','Chef de Projet Informatique'],['Turgay Demirtas','Administrateur Systèmes'],['Wasim Khadaroo','Administrateur Salesforce'],['Shail Sujeebun','Développeur IT'],['Mitheel Naga','Développeur IT'],['José Rafael Campos','Data Scientist']]},
+ {id:'bizdev',name:'Business Development',fam:'dev',rect:[-24,2,-15,14],doors:[['n']],desc:"Premier contact et qualification des nouveaux clients.",services:['Premier échange','Qualification','Prise de rendez-vous'],people:[
+  ['Jérémie Blévin','Directeur Développement'],['Guillaume Janbon','Head of Business Developer Performance'],['Arnaud Augé','Business Developer'],['Killian Deneux','Business Developer'],['Claire Benas','Business Developer'],['Marjorie Dufrasne','Business Developer'],['Maéva McAuliffe','Business Developer'],['Samuel Courvoisy','Business Developer'],['Julien Bouissonnade','Business Developer']]},
+ {id:'retraite',name:'Planification Retraite',fam:'ret',rect:[-15,2,-1,14],doors:[['n']],desc:"Retraite suisse, française et frontalière : rachats LPP, retraits de capitaux, relevé de carrière.",services:['Retraite Suisse','Retraite Française','Retraite Frontalière','Dirigeants et indépendants'],people:[
+  ['Tolga Tarakci','Directeur Adjoint Pôle Retraite'],['Axel Jeune','Responsable Commercial Retraite'],['Florent Billion','Responsable Planification Retraite Suisse'],['Bastien Billard','Responsable Planification Frontalier'],['Victor Alves','Responsable Planification France'],['Dorian Belando',"Manager d'équipe Planification Frontalier"],['Bastien Bouvier',"Manager d'équipe Planification Frontalier"],['Nelly Merle','Conseillère en Planification Retraite'],['Agathe Mazzuchetti','Conseillère en Planification Retraite'],['Sami Yahiaoui','Conseiller en Planification Retraite'],['Alizée Grilli','Conseillère en Planification Retraite'],['Richard Douang','Conseiller en Planification Retraite'],['Thibaud Chalandon','Planificateur Retraite'],['Maxime Conforto','Planificateur Retraite'],['Pierre Leyvraz','Planificateur Retraite']]},
+ {id:'demarches',name:'Démarches Retraite',fam:'ret',rect:[-1,2,6,14],doors:[['n']],desc:"Gestion administrative des dossiers : caisses, libre passage, demandes de rente.",services:['Démarches administratives','Libre passage','Demandes de rente'],people:[
+  ['Laurane Hernandez','Responsable Service Démarches'],['Charlotte Boyer','Conseillère Démarches Retraite'],['Andrea Veloso','Conseillère Démarches Retraite'],['Inès Benseba','Conseillère Démarches Retraite'],['Miki Sim',"Référente d'équipe · Gestionnaire Administrative"],['Katya Hammache','Gestionnaire Administrative'],['Nadjma Abdelkader','Gestionnaire Administrative']]},
+ {id:'suivi',name:'Suivi Clients',fam:'cli',rect:[6,2,12,14],doors:[['n']],desc:"Suivi de la relation après la mise en œuvre.",services:['Suivi client','Suivi technique'],people:[
+  ['Ahlem Elbey','Responsable du Suivi Clients'],['Sirine Charni','Chargée du Suivi Clients'],['Celile Karakaya','Chargée du Suivi Clients'],['Tom Alexandre','Chargé du Suivi Clients'],['Valérie Comaren','Chargée de Suivi Clients'],['Gökan Cetin','Chargé du Suivi Technique']]},
+ {id:'admin',name:'Administration & Opérations',fam:'sup',rect:[12,2,24,14],doors:[['n']],desc:"Opérations, finance, comptabilité, back-office et services généraux.",services:['Opérations','Contrôle financier','Comptabilité','Back-office','Office management'],people:[
+  ['Benjamin Boudot','Directeur des Opérations'],['Thomas Verstraten','Responsable Administratif'],['Samuel Dao','Responsable Opérations & Développement'],['Leyla Kocak','Contrôleuse Financière'],['Gulay Kiyar','Assistante Comptabilité'],['Mathis Thomson','Stagiaire Comptabilité'],['Cédric Cettour-Baron','Coordinateur Administratif'],['Ydriss Mercier','Chargé de Projets'],['Amélie Michel','Assistante Administrative'],['Esra Kilic','Assistante Administrative'],['Eva De Miranda','Assistante Administrative'],['Morgan Duval','Assistante Administrative'],['Mathieu Oury','Office Manager'],['Johanne Pellen','Office Manager']]},
+ {id:'rh',name:'Ressources Humaines',fam:'sup',rect:[24,-8,31,0],doors:[['w',-1]],desc:"Recrutement, administration RH et accompagnement des équipes.",services:['Recrutement','Administration RH'],people:[
+  ['Marie Miani','Directrice des Ressources Humaines'],['Aurore Troussard','Spécialiste en Ressources Humaines'],['Aloysia Chassagne','Assistante Ressources Humaines'],['Mélanie Musso','Chargée de recrutement · Assistante RH']]},
+ {id:'marketing',name:'Marketing & Growth',fam:'dev',rect:[24,0,31,8],doors:[['w',1]],desc:"Marketing, communication, livres blancs, blog et croissance.",services:['Marketing','Communication','Livres blancs','Growth'],people:[
+  ['Audrey Mezin','Responsable Marketing'],['Anthony Dufrasne','Head of Growth & Innovation'],['Candice Belanger','Chargée de Marketing'],['Marine Caron','Chargée de Communication']]}
+];
+const Z=Object.fromEntries(ZONES.map(z=>[z.id,z]));
+const JOURNEYS={
+  retraite:{name:'Retraite',fam:'ret',weight:.5,steps:[
+    {z:'accueil',t:'Prise de contact',d:'Formulaire « Rencontrez-nous » ou appel'},
+    {z:'bizdev',t:'Échange de 15 minutes',d:'Exposer sa situation et ses objectifs'},
+    {z:'retraite',t:'Entretiens et devis',d:'Analyse avec scénarios et calculs'},
+    {z:'demarches',t:'Démarches administratives',d:'Caisses, libre passage, rentes'},
+    {z:'suivi',t:'Suivi client',d:'Relation dans la durée'}]},
+  gp:{name:'Gestion Privée',fam:'gp',weight:.3,steps:[
+    {z:'accueil',t:'Rendez-vous découverte',d:'Sans engagement'},
+    {z:'bizdev',t:'Qualification',d:'Profil et besoins'},
+    {z:'gp',t:'Gestionnaire Privé',d:'Clarifier les objectifs'},
+    {z:'inge',t:'Stratégie patrimoniale',d:'Ingénierie et offre financière'},
+    {z:'suivi',t:'Suivi client',d:'Revues régulières'}]},
+  fisc:{name:'Fiscalité',fam:'fisc',weight:.2,steps:[
+    {z:'accueil',t:'Prendre rendez-vous',d:'Premier échange offert'},
+    {z:'fisc',t:'Échange de 45 minutes',d:'Revenus, objectifs, besoins'},
+    {z:'fisc',t:'Audit et recommandations',d:"Restitution en moins d'une semaine"},
+    {z:'suivi',t:'Mise en œuvre et suivi',d:'Le client décide librement'}]}
+};
+
+/* ===== Rendu ===== */
+const view=document.getElementById('view'),labelsEl=document.getElementById('labels');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0x000000,0);
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+view.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.OrthographicCamera(-1,1,1,-1,-200,400);
+const HOME={pos:new THREE.Vector3(36,44,46),target:new THREE.Vector3(-1,0,1)};
+camera.position.copy(HOME.pos);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.target.copy(HOME.target);controls.enableDamping=true;controls.dampingFactor=.08;
+controls.minPolarAngle=.3;controls.maxPolarAngle=1.08;controls.minZoom=.7;controls.maxZoom=6;controls.screenSpacePanning=true;
+scene.add(new THREE.HemisphereLight(0xfdfcf8,0xc9cfc6,.85));
+const sun=new THREE.DirectionalLight(0xfff1dc,1.05);sun.position.set(-22,48,28);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-46,right:46,top:34,bottom:-34,far:150});sun.shadow.bias=-.0004;sun.shadow.radius=3;
+scene.add(sun);
+const fill=new THREE.DirectionalLight(0xdfe9ff,.25);fill.position.set(30,20,-20);scene.add(fill);
+
+const lin=h=>new THREE.Color(h).convertSRGBToLinear();
+const mc={};
+const mat=(h,r=.9)=>mc[h+'_'+r]||(mc[h+'_'+r]=new THREE.MeshStandardMaterial({color:lin(h),roughness:r,metalness:0}));
+function mesh(geo,m,x,y,z,cast=true){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=true;scene.add(o);return o}
+const box=(w,h,d,c,x,y,z,cast=true,r)=>mesh(new THREE.BoxGeometry(w,h,d),mat(c,r),x,y,z,cast);
+function rrShape(w,h,r){const s=new THREE.Shape(),x=-w/2,y=-h/2;s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+h-r);s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);s.lineTo(x+r,y+h);s.quadraticCurveTo(x,y+h,x,y+h-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);return s}
+function canvasTex(w,h,draw,rep){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}t.anisotropy=4;return t}
+
+// Socle de maquette + ombre portée
+const catcher=new THREE.Mesh(new THREE.PlaneGeometry(240,180),new THREE.ShadowMaterial({opacity:.16}));catcher.rotation.x=-Math.PI/2;catcher.position.y=-1.2;catcher.receiveShadow=true;scene.add(catcher);
+const plinth=mesh(new THREE.ExtrudeGeometry(rrShape(76,40,2.2),{depth:1.1,bevelEnabled:false}),mat(0xf7f6f2,.95),0,-.05,0);plinth.rotation.x=Math.PI/2;plinth.position.set(-.5,-.05,0);
+const lawn=mesh(new THREE.ShapeGeometry(rrShape(74,38,1.6)),mat(0xc3d4b3,1),-.5,.0,0,false);lawn.rotation.x=-Math.PI/2;
+// Parquet et couloir
+const oak=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#e6d6bd';g.fillRect(0,0,w,h);for(let y=0;y<h;y+=32){const off=(y/32%2)*64;for(let x=-64;x<w;x+=128){const v=rnd()*18-9;g.fillStyle=`rgb(${226+v},${210+v},${184+v})`;g.fillRect(x+off+1,y+1,126,30)}}g.globalAlpha=.06;for(let i=0;i<300;i++){g.fillStyle='#7a5a32';g.fillRect(rnd()*w,rnd()*h,rnd()*40,1)}},true);
+oak.repeat.set(.35,.35);
+const concrete=canvasTex(128,128,(g,w,h)=>{g.fillStyle='#e9e7e2';g.fillRect(0,0,w,h);for(let i=0;i<900;i++){const v=rnd()*20;g.fillStyle=`rgba(${120+v},${118+v},${110+v},.06)`;g.fillRect(rnd()*w,rnd()*h,2,2)}},true);
+concrete.repeat.set(10,1);
+const slab=mesh(new THREE.BoxGeometry(63,.3,30.4),mat(0xf3f1ec),-.5,.15,0);
+const corridor=mesh(new THREE.PlaneGeometry(48,4),new THREE.MeshStandardMaterial({map:concrete,roughness:.95}),0,.31,0,false);corridor.rotation.x=-Math.PI/2;
+const FY=.31; // niveau du sol intérieur
+
+const pickFloors=[],WALL=0xfbfaf7;
+const tint=(hex,k)=>'#'+new THREE.Color(hex).lerp(new THREE.Color(0xffffff),k).getHexString();
+ZONES.forEach(z=>{
+  const [x0,z0,x1,z1]=z.rect,w=x1-x0,d=z1-z0;z.cx=(x0+x1)/2;z.cz=(z0+z1)/2;
+  const fm=new THREE.MeshStandardMaterial({map:oak,roughness:.8,color:0xffffff});
+  const f=mesh(new THREE.PlaneGeometry(w-.1,d-.1),fm,z.cx,FY+.005,z.cz,false);f.rotation.x=-Math.PI/2;f.userData.zone=z.id;pickFloors.push(f);
+  z.floorMat=fm;
+  const H=.75,T=.22,i=.11,G=1.15;
+  const ds=Object.fromEntries(z.doors.map(([s,at])=>[s,at!==undefined?at:(s==='s'||s==='n'?z.cx:z.cz)]));
+  const seg=(ax,az,bx,bz)=>{const L=Math.hypot(bx-ax,bz-az);if(L<.05)return;const hz=az===bz;box(hz?L:T,H,hz?T:L,WALL,(ax+bx)/2,FY+H/2,(az+bz)/2,true,.95);box(hz?L:T+.02,.04,hz?T+.02:L,0xe7e3da,(ax+bx)/2,FY+H+.02,(az+bz)/2,false)};
+  const side=(name,ax,az,bx,bz)=>{const at=ds[name];
+    if(at===undefined){seg(ax,az,bx,bz);return}
+    if(az===bz){seg(ax,az,at-G,az);seg(at+G,az,bx,bz)}else{seg(ax,az,ax,at-G);seg(ax,at+G,bx,bz)}};
+  side('n',x0+i,z0+i,x1-i,z0+i);side('s',x0+i,z1-i,x1-i,z1-i);side('w',x0+i,z0+i,x0+i,z1-i);side('e',x1-i,z0+i,x1-i,z1-i);
+  const [s,at0]=z.doors[0],at=ds[s];
+  if(s==='s'){z.dp={x:at,z:z1-1.5};z.cp={x:at,z:0}}
+  if(s==='n'){z.dp={x:at,z:z0+1.5};z.cp={x:at,z:0}}
+  if(s==='w'){z.dp={x:x0+1.5,z:at};z.cp={x:x0-1.3,z:at}}
+  if(s==='e'){z.dp={x:x1-1.5,z:at};z.cp={x:x1+1.3,z:at}}
+  const lab=document.createElement('div');lab.className='zl';labelsEl.appendChild(lab);z.label=lab;
+  z.anchor=new THREE.Vector3(z.cx,FY+.8,s==='s'?z0+.9:s==='n'?z1-.9:z0+.9);
+});
+
+// Mobilier décoratif
+const potM=mat(0xf4f1ea),leafM=mat(0x6f9a5e),leafM2=mat(0x87ad72);
+function plant(x,z,s=1){mesh(new THREE.CylinderGeometry(.26*s,.2*s,.5*s,14),potM,x,FY+.25*s,z);const l=mesh(new THREE.IcosahedronGeometry(.48*s,1),rnd()<.5?leafM:leafM2,x,FY+.85*s,z);l.scale.y=1.15}
+function tree(x,z){mesh(new THREE.CylinderGeometry(.14,.18,1.2,8),mat(0x9c8a72),x,.6,z);const c=mesh(new THREE.IcosahedronGeometry(1.3,1),mat(rnd()<.5?0x93b37f:0xa7c290),x,2,z);c.scale.y=1.1}
+[[-21,-1.2],[-8,1.2],[6,-1.2],[19,1.2],[-30,-5],[-25.2,5],[30,-7.2],[30,7.2]].forEach(([x,z])=>plant(x,z));
+[[-34,-15],[-35,13],[33,-15],[33,14],[-12,17.2],[14,-17.2],[2,17.2],[-24,-17.2],[24,17.2],[-36,0]].forEach(([x,z])=>tree(x,z));
+// Accueil : comptoir, canapé, tapis
+box(3.4,.95,.8,0xf4f1ea,-27,FY+.48,-1.8);box(3.6,.07,1,0xb48a5a,-27,FY+.98,-1.8,true,.6);
+box(1,.42,3.2,0x2c6e69,-29.7,FY+.25,3.3,true,1);box(.3,.75,3.2,0x2c6e69,-30.3,FY+.42,3.3,true,1);box(1,.6,.3,0x2c6e69,-29.7,FY+.35,1.75,true,1);box(1,.6,.3,0x2c6e69,-29.7,FY+.35,4.85,true,1);
+box(1.2,.35,1.2,0xf4f1ea,-28.1,FY+.18,3.3);
+const rugA=mesh(new THREE.ShapeGeometry(rrShape(4.4,5,.8)),mat(0xd9c9a9,1),-28.6,FY+.012,2.6,false);rugA.rotation.x=-Math.PI/2;
+// Coin café dans le couloir
+box(1.6,.95,.7,0xf4f1ea,22.5,FY+.48,-1.55);box(.5,.5,.4,0x2b3138,22.2,FY+1.2,-1.55,true,.4);
+
+/* ===== Portraits (billboards) ===== */
+const STATUS={dispo:{t:'Disponible',hex:'#2fa863',css:'var(--s-dispo)'},rdv:{t:'En rendez-vous client',hex:'#3b7fd4',css:'var(--s-rdv)'},dossier:{t:'Sur un dossier',hex:'#e19b12',css:'var(--s-dossier)'},absent:{t:'Absent',hex:'#a3adb0',css:'var(--s-absent)'}};
+const imgCache={};
+function photoImg(name){if(imgCache[name])return imgCache[name];const im=new Image();im.src=PHOTOS[name]||'';imgCache[name]=im;return im}
+function drawPortrait(p){
+  const c=p.pc,g=c.getContext('2d'),S=c.width;g.clearRect(0,0,S,S);
+  const ring=STATUS[p.state].hex;
+  g.save();g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=10;g.shadowOffsetY=3;g.fillStyle='#fff';g.beginPath();g.arc(S/2,S/2-6,S/2-12,0,7);g.fill();g.restore();
+  g.beginPath();g.moveTo(S/2-10,S-24);g.lineTo(S/2+10,S-24);g.lineTo(S/2,S-8);g.closePath();g.fillStyle='#fff';g.fill();
+  g.lineWidth=7;g.strokeStyle=ring;g.beginPath();g.arc(S/2,S/2-6,S/2-17,0,7);g.stroke();
+  g.save();g.beginPath();g.arc(S/2,S/2-6,S/2-23,0,7);g.clip();
+  const im=p.img;if(im.complete&&im.naturalWidth)g.drawImage(im,S/2-(S/2-23),S/2-6-(S/2-23),(S/2-23)*2,(S/2-23)*2);else{g.fillStyle='#ddd';g.fill()}
+  g.restore();p.ptex.needsUpdate=true;
+}
+function clientPortrait(fam){
+  const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d'),S=96;
+  g.save();g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=8;g.shadowOffsetY=2;g.fillStyle='#fff';g.beginPath();g.arc(S/2,S/2-4,S/2-10,0,7);g.fill();g.restore();
+  g.fillStyle='#'+new THREE.Color(FAMS[fam].hex).getHexString();g.beginPath();g.arc(S/2,S/2-4,S/2-16,0,7);g.fill();
+  g.fillStyle='#fff';g.beginPath();g.arc(S/2,S/2-13,9,0,7);g.fill();g.beginPath();g.ellipse(S/2,S/2+11,16,11,0,Math.PI,0);g.fill();
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;
+}
+
+/* ===== Personnages ===== */
+const SKIN=[0xf1d1b5,0xe0b18f,0xc68a63,0x9a6a48,0x6e4a33],HAIR=[0x2b2018,0x4a3020,0x7a5230,0xb48a52,0x1a1a1a];
+const GE={leg:new THREE.CylinderGeometry(.085,.075,.58,8).translate(0,-.29,0),shoe:new THREE.BoxGeometry(.15,.08,.24).translate(0,-.6,.04),
+  torso:new THREE.CylinderGeometry(.2,.25,.58,14),shoulder:new THREE.SphereGeometry(.2,14,8,0,Math.PI*2,0,Math.PI/2),
+  arm:new THREE.CylinderGeometry(.06,.055,.48,8).translate(0,-.24,0),head:new THREE.SphereGeometry(.19,16,12),hair:new THREE.SphereGeometry(.2,16,10,0,Math.PI*2,0,Math.PI/2.05)};
+const pickPeople=[];
+function makeBody(shirt,skin,hair,id,tex){
+  const g=new THREE.Group();
+  const pants=mat(0x2f3a44,.8),shoe=mat(0x1d2328,.6),sh=mat(shirt,.85),sk=mat(skin,.7),hr=mat(hair,.9);
+  const legL=new THREE.Group(),legR=new THREE.Group();
+  [legL,legR].forEach((L,k)=>{L.add(new THREE.Mesh(GE.leg,pants),new THREE.Mesh(GE.shoe,shoe));L.position.set(k?.1:-.1,.62,0);L.children.forEach(m=>m.castShadow=true)});
+  const torso=new THREE.Mesh(GE.torso,sh);torso.position.y=.9;
+  const top=new THREE.Mesh(GE.shoulder,sh);top.position.y=1.19;top.scale.set(1,.45,1);
+  const armL=new THREE.Group(),armR=new THREE.Group();
+  [armL,armR].forEach((A,k)=>{A.add(new THREE.Mesh(GE.arm,sh));A.position.set(k?.25:-.25,1.15,0);A.children[0].castShadow=true});
+  const head=new THREE.Mesh(GE.head,sk);head.position.y=1.42;
+  const hm=new THREE.Mesh(GE.hair,hr);hm.position.y=1.45;hm.rotation.x=-.3;
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:true,transparent:true}));
+  sprite.position.y=2.35;sprite.scale.set(1.05,1.05,1);sprite.center.set(.5,.15);
+  [torso,head,hm,top].forEach(m=>{m.castShadow=true;m.userData.pid=id;if(id!==null)pickPeople.push(m)});
+  sprite.userData.pid=id;if(id!==null)pickPeople.push(sprite);
+  g.add(legL,legR,torso,top,armL,armR,head,hm,sprite);scene.add(g);
+  return {g,legL,legR,armL,armR,sprite};
+}
+
+/* ===== Bureaux et collaborateurs ===== */
+const PEOPLE=[];
+const STATES=['dispo','dispo','rdv','rdv','dossier','dossier','dossier','absent'];
+const deskTop=mat(0xfaf9f6,.6),deskEdge=mat(0xc49a6a,.7),monM=mat(0x2a2f35,.35),scrM=new THREE.MeshBasicMaterial({color:lin(0xbfd6e6)});
+ZONES.forEach(z=>{
+  z.load=Math.round(48+rnd()*48);
+  const n=z.people.length+(z.empty||0);if(!n)return;
+  const [x0,z0,x1,z1]=z.rect,s=z.doors[0][0];
+  let a=x0+1,b=x1-1,c=z0+1.1,d=z1-1.1;
+  if(s==='s')d=z1-2.6;if(s==='n')c=z0+2.6;if(s==='w')a=x0+2.4;if(s==='e')b=x1-2.4;
+  const w=b-a,dd=d-c,cols=Math.max(1,Math.min(n,Math.floor(w/1.8))),rows=Math.ceil(n/cols);
+  const rug=mesh(new THREE.ShapeGeometry(rrShape(w+.3,dd+.2,.6)),mat(tint(FAMS[z.fam].hex,.55),1),(a+b)/2,FY+.012,(c+d)/2+.2,false);rug.rotation.x=-Math.PI/2;z.rug=rug;z.rugBase=rug.material.color.clone();rug.material=rug.material.clone();
+  plant(x0+.75,s==='n'?z1-.75:z0+.75,.85);
+  const chairM=mat(tint(FAMS[z.fam].hex,.05),.8);
+  for(let k=0;k<n;k++){
+    const col=k%cols,row=Math.floor(k/cols);
+    const dx=a+(col+.5)*w/cols,dz=c+(row+.5)*dd/rows+.35;
+    mesh(new THREE.BoxGeometry(1.45,.06,.72),deskTop,dx,FY+.74,dz);
+    mesh(new THREE.BoxGeometry(.06,.72,.66),deskEdge,dx-.68,FY+.37,dz);mesh(new THREE.BoxGeometry(.06,.72,.66),deskEdge,dx+.68,FY+.37,dz);
+    mesh(new THREE.BoxGeometry(.6,.36,.04),monM,dx,FY+1.02,dz-.16);const sc=mesh(new THREE.PlaneGeometry(.54,.3),scrM,dx,FY+1.02,dz-.137,false);
+    mesh(new THREE.CylinderGeometry(.04,.04,.2,6),monM,dx,FY+.82,dz-.18);
+    mesh(new THREE.CylinderGeometry(.27,.27,.08,16),chairM,dx,FY+.46,dz-.85);mesh(new THREE.BoxGeometry(.5,.45,.07),chairM,dx,FY+.75,dz-1.12);
+    mesh(new THREE.CylinderGeometry(.04,.04,.42,6),monM,dx,FY+.21,dz-.85);
+    if(k>=z.people.length)continue;
+    const [name,role]=z.people[k],id=PEOPLE.length;
+    const pc=document.createElement('canvas');pc.width=pc.height=128;const ptex=new THREE.CanvasTexture(pc);ptex.encoding=THREE.sRGBEncoding;
+    const p={id,name,role,zone:z.id,seat:{x:dx,z:dz-.85},visit:{x:dx,z:dz+1.1},state:pick(STATES),walking:false,pc,ptex,img:photoImg(name),
+      rdvToday:Math.floor(rnd()*5),dossiers:3+Math.floor(rnd()*14),tasks:Math.floor(rnd()*7)};
+    p.body=makeBody(FAMS[z.fam].hex,pick(SKIN),pick(HAIR),id,ptex);
+    p.img.onload=()=>drawPortrait(p);
+    sit(p);drawPortrait(p);PEOPLE.push(p);
+  }
+});
+function sit(p){const b=p.body;b.g.position.set(p.seat.x,FY-.13,p.seat.z);b.g.rotation.y=0;b.legL.rotation.x=b.legR.rotation.x=-Math.PI/2;b.armL.rotation.x=b.armR.rotation.x=-1;p.sitting=true;b.g.visible=p.state!=='absent'}
+function stand(p){const b=p.body;b.g.position.y=FY;b.legL.rotation.x=b.legR.rotation.x=0;b.armL.rotation.x=b.armR.rotation.x=0;p.sitting=false;b.g.visible=true}
+function setStatus(p,s){p.state=s;drawPortrait(p);if(p.sitting)p.body.g.visible=s!=='absent'}
+
+/* ===== Déplacements ===== */
+function route(fromZ,toZ,toPt){if(fromZ===toZ)return[toPt];const A=Z[fromZ],B=Z[toZ];return[A.dp,A.cp,B.cp,B.dp,toPt]}
+const agents=[];
+function walkTo(a,path,then){a.path=path.map(q=>({x:q.x,z:q.z}));a.then=then}
+function stepAgent(a,dt,t){
+  const b=a.body;if(!a.path||!a.path.length)return;
+  const q=a.path[0],dx=q.x-b.g.position.x,dz=q.z-b.g.position.z,dist=Math.hypot(dx,dz),sp=(a.speed||2.2)*dt;
+  if(dist<=sp){b.g.position.x=q.x;b.g.position.z=q.z;a.path.shift();if(!a.path.length&&a.then){const f=a.then;a.then=null;f()}}
+  else{b.g.position.x+=dx/dist*sp;b.g.position.z+=dz/dist*sp;const target=Math.atan2(dx,dz);let r=target-b.g.rotation.y;r=Math.atan2(Math.sin(r),Math.cos(r));b.g.rotation.y+=r*Math.min(1,dt*12)}
+  const s=Math.sin(t*9+a.ph)*.55;b.legL.rotation.x=s;b.legR.rotation.x=-s;b.armL.rotation.x=-s*.7;b.armR.rotation.x=s*.7;b.g.position.y=FY+Math.abs(Math.sin(t*9+a.ph))*.04;
+}
+
+/* Clients */
+let inJourney=0,doneToday=0,rdvToday=0;
+const CLIENT_NAMES=['Famille Rochat','M. Keller','Mme Dubois','M. Favre','Famille Meier','Mme Lambert','M. Girard','Mme Schmid','Famille Bovet','M. Perrin','Mme Weber','M. Chevalley','Mme Fontaine','M. Rey'];
+const ctex={};Object.keys(FAMS).forEach(k=>ctex[k]=clientPortrait(k));
+function pickJourney(){let r=rnd();for(const k in JOURNEYS){r-=JOURNEYS[k].weight;if(r<=0)return k}return'retraite'}
+function spawnClient(){
+  if(agents.filter(a=>a.kind==='client').length>=7)return;
+  const jk=pickJourney(),J=JOURNEYS[jk];
+  const body=makeBody(0xf2efe8,pick(SKIN),pick(HAIR),null,ctex[J.fam]);body.sprite.scale.set(.75,.75,1);
+  body.g.position.set(-35,FY,0);
+  const c={kind:'client',body,name:pick(CLIENT_NAMES),j:jk,step:-1,zone:null,ph:rnd()*6,speed:2};
+  agents.push(c);inJourney++;
+  walkTo(c,[{x:-30,z:0},{x:-27,z:-.6}],()=>arrive(c,0));
+}
+function arrive(c,i){
+  const J=JOURNEYS[c.j],st=J.steps[i];c.step=i;c.zone=st.z;
+  const staff=PEOPLE.filter(p=>p.zone===st.z&&p.state!=='absent'&&!p.walking);
+  let who=null;if(staff.length){who=pick(staff);setStatus(who,'rdv');rdvToday++}
+  c.body.g.rotation.y=Math.PI;
+  log(J.fam,who,`${c.name} · ${st.t}`,`${Z[st.z].name}${who?' avec '+who.name:''}`);
+  bubble(c.body.g.position.clone().setY(3.2),`<b>${i+1}/${J.steps.length}</b>${esc(st.t)}`);
+  setTimeout(()=>{
+    if(who&&who.state==='rdv')setStatus(who,pick(['dispo','dossier']));
+    const nx=i+1;
+    if(nx>=J.steps.length){walkTo(c,[...route(c.zone,'accueil',{x:-27,z:1}),{x:-30,z:0},{x:-37,z:0}],()=>{scene.remove(c.body.g);agents.splice(agents.indexOf(c),1);inJourney--;doneToday++;renderKpis()});return}
+    const nz=J.steps[nx].z,host=PEOPLE.filter(p=>p.zone===nz);
+    walkTo(c,route(c.zone,nz,host.length?pick(host).visit:{x:Z[nz].cx,z:Z[nz].cz}),()=>arrive(c,nx));
+  },(reduce?6000:3400)+rnd()*2500);
+  renderKpis();
+}
+function wander(){
+  if(agents.filter(a=>a.kind==='staff').length>=6)return;
+  const p=pick(PEOPLE.filter(p=>!p.walking&&p.state!=='absent'&&p.state!=='rdv'&&!(selected&&selected.type==='person'&&selected.id===p.id)));if(!p)return;
+  const coffee=rnd()<.3,dest=coffee?null:pick(ZONES.filter(z=>z.id!==p.zone&&z.people.length)).id;
+  const destPt=coffee?{x:22.5+(rnd()-.5)*1.5,z:-.4}:pick(PEOPLE.filter(q=>q.zone===dest)).visit;
+  p.walking=true;stand(p);
+  const a={kind:'staff',body:p.body,p,ph:rnd()*6,speed:2.4};agents.push(a);
+  const out=coffee?[Z[p.zone].dp,Z[p.zone].cp,destPt]:route(p.zone,dest,destPt);
+  const back=coffee?[{x:Z[p.zone].cp.x,z:Z[p.zone].cp.z},Z[p.zone].dp,{x:p.seat.x,z:p.seat.z+.6},p.seat]:[...route(dest,p.zone,{x:p.seat.x,z:p.seat.z+.6}),p.seat];
+  walkTo(a,[{x:p.seat.x,z:p.seat.z+.6},...out],()=>{
+    p.body.g.rotation.y=coffee?Math.PI*.5:Math.PI;
+    bubble(p.body.g.position.clone().setY(3.3),coffee?`${esc(p.name.split(' ')[0])} prend un café`:`${esc(p.name.split(' ')[0])} passe voir ${esc(Z[dest].name)}`);
+    setTimeout(()=>walkTo(a,back,()=>{agents.splice(agents.indexOf(a),1);p.walking=false;sit(p)}),2600+rnd()*3000);
+  });
+}
+
+/* ===== Interface ===== */
+const feedEl=document.getElementById('feed');
+function log(fam,who,t,s){
+  const el=document.createElement('div');el.className='ev';
+  el.innerHTML=(who?img(who.name,'who'):`<span class="dot" style="background:${FAMS[fam].css}">+</span>`)+`<p>${esc(t)}<small>${esc(s)}</small></p>`;
+  fillPhotos(el);feedEl.prepend(el);while(feedEl.children.length>4)feedEl.lastChild.remove();
+}
+const bubbles=[];
+function bubble(pos,html){const el=document.createElement('div');el.className='bubble';el.innerHTML=html;labelsEl.appendChild(el);bubbles.push({el,pos,t:0})}
+document.getElementById('legend').innerHTML=Object.values(FAMS).map(f=>`<span><i style="background:${f.css}"></i>${f.name}</span>`).join('');
+
+let mode='org',journey='retraite',selected=null,hovered=null;
+const tip=document.createElement('div');tip.className='tip';tip.hidden=true;labelsEl.appendChild(tip);let tipFor=null;
+document.querySelectorAll('.modes button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+function setMode(m){mode=m;document.querySelectorAll('.modes button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mode===m));applyMode();renderPanel()}
+
+let pathLine=null,pathDots=[];
+const loadHex=v=>v<65?0x9fd8b2:v<82?0xf3cf7d:0xef9a8f;
+function applyMode(){
+  if(pathLine){scene.remove(pathLine);pathLine=null}pathDots.forEach(d=>scene.remove(d));pathDots=[];
+  const J=JOURNEYS[journey],onPath=new Set(J.steps.map(s=>s.z));
+  ZONES.forEach(z=>{
+    const dim=mode==='parcours'&&!onPath.has(z.id);
+    z.floorMat.color.set(dim?0xd7d4cf:0xffffff);
+    if(z.rug){if(mode==='charge')z.rug.material.color.copy(lin(loadHex(z.load)));else if(dim)z.rug.material.color.copy(lin(0xdcdad5));else z.rug.material.color.copy(z.rugBase)}
+  });
+  if(mode==='parcours'){
+    const pts=[{x:-37,z:0},{x:-27,z:-.6}];
+    J.steps.forEach((s,i)=>{if(!i)return;const prev=J.steps[i-1].z,zz=Z[s.z],tgt={x:zz.cx,z:zz.cz};if(prev!==s.z)pts.push(...route(prev,s.z,tgt));else pts.push({x:tgt.x+.6,z:tgt.z+1})});
+    const curve=new THREE.CatmullRomCurve3(pts.map(q=>new THREE.Vector3(q.x,FY+.06,q.z)),false,'catmullrom',.1);
+    pathLine=new THREE.Mesh(new THREE.TubeGeometry(curve,400,.13,6,false),new THREE.MeshBasicMaterial({color:lin(FAMS[J.fam].hex)}));scene.add(pathLine);
+    J.steps.forEach((s,i)=>{const zz=Z[s.z];const m=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.06,24),new THREE.MeshBasicMaterial({color:lin(FAMS[J.fam].hex)}));m.position.set(zz.cx+(i&&J.steps[i-1].z===s.z?.6:0),FY+.05,zz.cz+(i&&J.steps[i-1].z===s.z?1:0));scene.add(m);pathDots.push(m)});
+  }
+  renderLabels();
+}
+function renderLabels(){
+  const J=JOURNEYS[journey];
+  ZONES.forEach(z=>{
+    const steps=J.steps.map((s,i)=>s.z===z.id?i+1:null).filter(Boolean);
+    let extra=z.people.length?`<small>${z.people.length}</small>`:'';
+    if(mode==='charge'&&z.people.length)extra=`<small>${z.load} %</small>`;
+    if(mode==='parcours')extra=steps.map(n=>`<span class="step">${n}</span>`).join('');
+    z.label.innerHTML=`<i style="background:${FAMS[z.fam].css}"></i>${esc(z.name)}${extra}`;
+    z.label.classList.toggle('dim',mode==='parcours'&&!steps.length);
+  });
+}
+
+/* Sélection */
+const ray=new THREE.Raycaster(),ptr=new THREE.Vector2();let downAt=null;
+function hit(e){
+  const r=renderer.domElement.getBoundingClientRect();
+  ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ptr,camera);
+  const hp=ray.intersectObjects(pickPeople).find(h=>{let o=h.object;while(o.parent&&o.parent!==scene)o=o.parent;return o.visible});
+  if(hp)return{type:'person',id:hp.object.userData.pid};
+  const hf=ray.intersectObjects(pickFloors)[0];return hf?{type:'zone',id:hf.object.userData.zone}:null;
+}
+renderer.domElement.addEventListener('pointerdown',e=>{downAt=[e.clientX,e.clientY]});
+renderer.domElement.addEventListener('pointerup',e=>{if(!downAt||Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>6)return;select(hit(e))});
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;hovered=hit(e);renderer.domElement.style.cursor=hovered?'pointer':'grab'});
+renderer.domElement.addEventListener('pointerleave',()=>hovered=null);
+const camGoal={t:null,zoom:null};
+function select(s){
+  selected=s;
+  if(!s){camGoal.t=HOME.target.clone();camGoal.zoom=1}
+  else if(s.type==='zone'){const z=Z[s.id];camGoal.t=new THREE.Vector3(z.cx,0,z.cz);camGoal.zoom=Math.max(camera.zoom,2)}
+  else{const P=PEOPLE[s.id];camGoal.t=P.body.g.position.clone().setY(0);camGoal.zoom=Math.max(camera.zoom,3.2);P.body.sprite.scale.set(1.5,1.5,1)}
+  PEOPLE.forEach(P=>{if(!s||s.type!=='person'||s.id!==P.id)P.body.sprite.scale.set(1.05,1.05,1)});
+  document.getElementById('q').value='';document.getElementById('results').innerHTML='';
+  renderPanel();
+}
+const selRing=new THREE.Mesh(new THREE.RingGeometry(.5,.66,40),new THREE.MeshBasicMaterial({color:lin(0x0e5a55),side:THREE.DoubleSide,transparent:true}));selRing.rotation.x=-Math.PI/2;selRing.visible=false;scene.add(selRing);
+document.getElementById('zin').onclick=()=>{camGoal.zoom=Math.min(controls.maxZoom,camera.zoom*1.4)};
+document.getElementById('zout').onclick=()=>{camGoal.zoom=Math.max(controls.minZoom,camera.zoom/1.4)};
+document.getElementById('home').onclick=()=>{camGoal.t=HOME.target.clone();camGoal.zoom=1;camera.position.copy(HOME.pos).add(controls.target).sub(HOME.target)};
+
+/* Recherche */
+const q=document.getElementById('q'),resEl=document.getElementById('results');
+const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+q.addEventListener('input',()=>{
+  const v=norm(q.value.trim());if(!v){resEl.innerHTML='';return}
+  const r=PEOPLE.filter(p=>norm(p.name+' '+p.role+' '+Z[p.zone].name).includes(v)).slice(0,6);
+  resEl.innerHTML=r.length?r.map(p=>`<button class="row" data-p="${p.id}">${img(p.name)}<span>${esc(p.name)}<small>${esc(p.role)}</small></span></button>`).join(''):`<p class="muted">Aucun résultat.</p>`;
+  fillPhotos(resEl);resEl.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>select({type:'person',id:+b.dataset.p}));
+});
+
+/* Panneau */
+const pbody=document.getElementById('pbody'),kpisEl=document.getElementById('kpis');
+const loadCss=v=>v<65?'var(--s-dispo)':v<82?'var(--s-dossier)':'var(--alert)';
+function renderKpis(){
+  const present=PEOPLE.filter(p=>p.state!=='absent');
+  kpisEl.innerHTML=`<div class="kpi present"><div class="stack">${present.slice(0,5).map(p=>img(p.name)).join('')}</div><div class="kpi"><b>${present.length}<small style="font-size:13px;color:var(--muted);font-weight:500">/${PEOPLE.length}</small></b><span>Présents</span></div></div>
+  <div class="kpi"><b>${inJourney}</b><span>Clients en parcours</span></div>
+  <div class="kpi"><b>${rdvToday}</b><span>RDV aujourd'hui</span></div>
+  <div class="kpi"><b>${doneToday}</b><span>Parcours terminés</span></div>`;
+  fillPhotos(kpisEl);
+}
+const staffOf=id=>PEOPLE.filter(p=>p.zone===id);
+function journeyHTML(){
+  const J=JOURNEYS[journey];
+  return `<div class="journeys" role="group" aria-label="Parcours">${Object.entries(JOURNEYS).map(([k,v])=>`<button data-j="${k}" aria-pressed="${k===journey}">${v.name}</button>`).join('')}</div>
+  <ol class="steps">${J.steps.map((s,i)=>`<li><span class="n">${i+1}</span><div><p>${esc(s.t)}</p><small>${esc(Z[s.z].name)} · ${esc(s.d)}</small></div></li>`).join('')}</ol>`;
+}
+function overview(){
+  const founders=['Arnaud Merlin','Cédric Teppati','Nicolas Chalochet','Paul Dao','Taniel Keskin'].map(n=>PEOPLE.find(p=>p.name===n)).filter(Boolean);
+  const zones=ZONES.filter(z=>z.people.length).sort((a,b)=>mode==='charge'?b.load-a.load:0);
+  const poleCard=z=>{const st=staffOf(z.id);return `<button class="pole" data-z="${z.id}"><span class="nm"><i style="background:${FAMS[z.fam].css}"></i>${esc(z.name)}</span><span style="display:flex;align-items:center;gap:8px"><span class="stack">${st.slice(0,4).map(p=>img(p.name)).join('')}</span><code>${mode==='charge'?z.load+' %':st.length}</code></span><span class="sub">${esc(z.services.slice(0,3).join(' · '))}</span>${mode==='charge'?`<span class="loadbar"><b style="width:${z.load}%;background:${loadCss(z.load)}"></b></span>`:''}</button>`};
+  return `<div class="ph"><div><div class="eyebrow">Vue d'ensemble</div><h2>Planifique Groupe</h2><p>Conseil patrimonial pour frontaliers et résidents suisses. Fondé en 2018 par trois amis d'enfance, aujourd'hui cinq associés.</p></div></div>
+  <div class="sec"><div class="facts">
+    <div class="fact"><b>120</b><span>collaborateurs</span></div>
+    <div class="fact"><b>+6000</b><span>clients accompagnés</span></div>
+    <div class="fact"><b>3</b><span>sites</span></div>
+    <div class="fact"><b>14</b><span>équipes sur le plateau</span></div>
+  </div></div>
+  <div class="sec"><h3>Les associés</h3><div class="founders">${founders.map(p=>`<button class="founder" data-p="${p.id}">${img(p.name)}<span>${esc(p.name.split(' ')[0])}</span></button>`).join('')}</div></div>
+  ${mode==='parcours'?`<div class="sec"><h3>Parcours client</h3>${journeyHTML()}</div>`:''}
+  <div class="sec"><h3>${mode==='charge'?'Charge des équipes':'Équipes'} <span>${PEOPLE.length} personnes</span></h3><div class="poles">
+    ${mode==='charge'?zones.map(poleCard).join(''):Object.entries(FAMS).map(([k,f])=>{const zs=zones.filter(z=>z.fam===k);return zs.length?`<div class="eyebrow" style="margin:6px 0 -2px"><i style="background:${f.css}"></i>${f.name}</div>${zs.map(poleCard).join('')}`:''}).join('')}
+  </div></div>
+  ${mode!=='parcours'?`<div class="sec"><h3>Parcours client</h3>${journeyHTML()}</div>`:''}
+  <div class="sec"><p class="src">Organisation, rôles et photos : annuaire public du site Planifique. Statuts, rendez-vous, charge et clients : simulés. Source cible : Salesforce (User, Account, Opportunity, Event).</p></div>`;
+}
+function zoneHTML(z){
+  const f=FAMS[z.fam],staff=staffOf(z.id),by=k=>staff.filter(p=>p.state===k).length;
+  const here=agents.filter(a=>a.kind==='client'&&a.zone===z.id).length;
+  const steps=Object.values(JOURNEYS).flatMap(J=>J.steps.filter(s=>s.z===z.id).map(s=>`${J.name} · ${s.t}`));
+  return `<div class="band" style="background:${f.css}"></div><div class="ph"><div><div class="eyebrow"><i style="background:${f.css}"></i>${f.name}</div><h2>${esc(z.name)}</h2><p>${esc(z.desc)}</p></div><button class="close" id="back">Retour</button></div>
+  ${staff.length?`<div class="sec"><div class="facts">
+    <div class="fact"><b>${staff.length}</b><span>collaborateurs</span></div>
+    <div class="fact"><b>${here}</b><span>clients sur place</span></div>
+    <div class="fact"><b>${by('rdv')}</b><span>en rendez-vous</span></div>
+    <div class="fact"><b>${by('dispo')}</b><span>disponibles</span></div>
+  </div>
+  <div class="meter"><small><span>Charge de l'équipe</span><b>${z.load} %</b></small><div class="loadbar"><b style="width:${z.load}%;background:${loadCss(z.load)}"></b></div></div></div>`:''}
+  ${staff.length?`<div class="sec"><h3>Équipe <span>${staff.length}</span></h3><div class="team">${staff.map(p=>`<button class="card" data-p="${p.id}"><span class="ava">${img(p.name)}<i style="background:${p.walking?'var(--accent)':STATUS[p.state].css}"></i></span><span>${esc(p.name)}<small>${esc(p.role)}</small></span></button>`).join('')}</div>${z.empty?`<p class="muted">${z.empty} postes de cette équipe ne figurent pas dans l'annuaire public.</p>`:''}</div>`:''}
+  <div class="sec"><h3>Services</h3><div class="tags">${z.services.map(s=>`<span>${esc(s)}</span>`).join('')}</div></div>
+  ${steps.length?`<div class="sec"><h3>Étapes de parcours ici</h3>${steps.map(s=>`<p class="muted">${esc(s)}</p>`).join('')}</div>`:''}`;
+}
+function personHTML(p){
+  const z=Z[p.zone],f=FAMS[z.fam],st=p.walking?{t:'En déplacement',css:'var(--accent)'}:STATUS[p.state];
+  const mates=staffOf(z.id).filter(m=>m.id!==p.id);
+  return `<div class="band" style="background:${f.css}"></div><div class="ph"><div class="hero"><span class="ava">${img(p.name)}<i style="background:${st.css}"></i></span><div><div class="eyebrow"><i style="background:${f.css}"></i>${esc(z.name)}</div><h2>${esc(p.name)}</h2><p>${esc(p.role)}</p></div></div><button class="close" id="back">Retour</button></div>
+  <div class="sec"><span class="status"><i style="background:${st.css}"></i>${st.t}</span><div class="facts" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="fact"><b>${p.rdvToday}</b><span>RDV du jour</span></div>
+    <div class="fact"><b>${p.dossiers}</b><span>dossiers</span></div>
+    <div class="fact"><b>${p.tasks}</b><span>tâches</span></div>
+  </div><p class="muted">Chiffres simulés.</p></div>
+  <div class="sec"><h3>Fiche</h3><dl class="kv"><dt>Pôle</dt><dd>${f.name}</dd><dt>Équipe</dt><dd>${esc(z.name)}</dd><dt>Site</dt><dd>À renseigner depuis Salesforce</dd></dl></div>
+  ${mates.length?`<div class="sec"><h3>Dans la même équipe <span>${mates.length}</span></h3><div class="list">${mates.slice(0,6).map(m=>`<button class="row" data-p="${m.id}">${img(m.name)}<span>${esc(m.name)}<small>${esc(m.role)}</small></span></button>`).join('')}</div>${mates.length>6?`<button class="row" data-z="${z.id}"><span>Voir toute l'équipe ${esc(z.name)}</span></button>`:''}</div>`:''}`;
+}
+let lastHTML='';
+function renderPanel(soft){
+  const html=!selected?overview():selected.type==='zone'?zoneHTML(Z[selected.id]):personHTML(PEOPLE[selected.id]);
+  if(soft&&html===lastHTML)return;
+  const panel=document.getElementById('panel'),sc=panel.scrollTop;pbody.innerHTML=html;lastHTML=html;fillPhotos(pbody);panel.scrollTop=soft?sc:0;
+  pbody.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>select({type:'zone',id:b.dataset.z}));
+  pbody.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>select({type:'person',id:+b.dataset.p}));
+  pbody.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{journey=b.dataset.j;if(mode!=='parcours')setMode('parcours');else{applyMode();renderPanel(true)}});
+  const back=pbody.querySelector('#back');if(back)back.onclick=()=>select(null);
+}
+
+/* ===== Boucle ===== */
+function resize(){
+  const w=view.clientWidth,h=view.clientHeight,a=w/h,S=Math.max(38,72/a);
+  camera.left=-S*a/2;camera.right=S*a/2;camera.top=S/2;camera.bottom=-S/2;camera.updateProjectionMatrix();renderer.setSize(w,h,false);
+}
+new ResizeObserver(resize).observe(view);resize();
+const v3=new THREE.Vector3();
+function project(p){v3.copy(p).project(camera);return{x:(v3.x*.5+.5)*view.clientWidth,y:(-v3.y*.5+.5)*view.clientHeight}}
+const clock=new THREE.Clock();
+function frame(){
+  const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
+  if(camGoal.t){const dl=camGoal.t.clone().sub(controls.target).multiplyScalar(.09);controls.target.add(dl);camera.position.add(dl);if(controls.target.distanceTo(camGoal.t)<.03)camGoal.t=null}
+  if(camGoal.zoom){camera.zoom+=(camGoal.zoom-camera.zoom)*.09;camera.updateProjectionMatrix();if(Math.abs(camGoal.zoom-camera.zoom)<.005)camGoal.zoom=null}
+  controls.update();
+  agents.forEach(a=>stepAgent(a,dt*(reduce?.5:1),t));
+  if(selected&&selected.type==='person'){const g=PEOPLE[selected.id].body.g;selRing.visible=g.visible;selRing.position.set(g.position.x,FY+.03,g.position.z);selRing.scale.setScalar(1+Math.sin(t*3)*.06)}else selRing.visible=false;
+  renderer.render(scene,camera);
+  ZONES.forEach(z=>{const p=project(z.anchor);z.label.style.left=p.x+'px';z.label.style.top=p.y+'px'});
+  if(hovered&&hovered.type==='person'){const P=PEOPLE[hovered.id],qq=project(P.body.g.position.clone().setY(3.4));tip.hidden=false;tip.style.left=qq.x+'px';tip.style.top=qq.y+'px';if(tipFor!==P.id){tipFor=P.id;tip.innerHTML=`${img(P.name)}<div><b>${esc(P.name)}</b><small>${esc(P.role)}</small></div>`;fillPhotos(tip)}}else{tip.hidden=true;tipFor=null}
+  for(let i=bubbles.length-1;i>=0;i--){const o=bubbles[i];o.t+=dt;const qq=project(o.pos);o.el.style.left=qq.x+'px';o.el.style.top=qq.y+'px';if(o.t>2.6){o.el.remove();bubbles.splice(i,1)}}
+  requestAnimationFrame(frame);
+}
+applyMode();renderKpis();renderPanel();
+spawnClient();setTimeout(spawnClient,1500);
+setInterval(spawnClient,reduce?9000:4800);
+setInterval(wander,reduce?7000:2400);
+setInterval(()=>{const p=pick(PEOPLE);if(!p.walking&&p.state!=='rdv'){setStatus(p,pick(STATES));renderKpis()}},3000);
+setInterval(()=>{if(selected)renderPanel(true)},1500);
+frame();
+})();
+</script>
