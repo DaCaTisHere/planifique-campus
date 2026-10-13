@@ -30,5 +30,7 @@ Ouvrir `campus/index.html` dans un navigateur, ou `npx serve campus`.
 
 ## Données personnelles
 
-Ce dépôt contient les noms et photos des collaborateurs. À garder **privé**
-et à valider avec le DPO avant tout partage (nLPD / RGPD).
+Les noms, rôles et photos proviennent de l'annuaire public du site Planifique.
+Ce dépôt sert à transmettre le code et le design du prototype ; le projet de
+production, branché sur Salesforce, sera développé dans un dépôt privé. Tout
+collaborateur peut demander le retrait de sa photo (nLPD / RGPD).
